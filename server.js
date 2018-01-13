@@ -37,7 +37,7 @@ app.post('/addblogs', (req, res) => {
           db.collection('blogs').update({ name: blogs[i] }, { name: blogs[i], latest_scrape: new Date().getTime() }, { upsert: true });
       }
   }
-  db.collection('blogs').find( { $query: {}, $orderby: { latest_scrape : 1 } }).toArray((a,b)=>{
+  db.collection('blogs').find( { $query: {}, $sort: { latest_scrape : 1 } }).toArray((a,b)=>{
       console.log(b);
   });
   //
@@ -48,59 +48,63 @@ app.get('/backup/', async (req,res)=>{
   // Make the request
     console.log('backup');
     let posts = [];
-    await db.collection('blogs').findOne({}, {sort: { latest_scrape : 1 } }, (a,b)=>{
-        let latest_id = b ? b.latest : 0;
-        // await
-        client.blogPosts(b.name + '.tumblr.com')
-            .then((data) => {
-                console.log('blog',b.name);
-                db.collection('blogs').update(
-                    { name: b.name },
-                    {
-                        $set: {latest_scrape: new Date().getTime()}
-                    }
-                )
-                //console.log(data.posts); // liked_posts
-                let a = [];
-                if (data){
-                  if (data.posts.length){
-                    db.collection('blogs').update(
-                        { name: b.name },
-                        {
-                            name: b.name,
-                            latest: data.posts[0].id,
-                            latest_scrape: new Date().getTime()
-                        }
-                    )
-                  }
-                    a = data.posts.filter((post)=>{
-                      console.log(latest_id, post.id);
-                        if (post.id > latest_id || !latest_id){
-                          console.log('Insert', post);
-                            db.collection('posts').update(
-                              {id: post.id},
-                              post,
-                              { upsert: true }
-                            )
-                            posts.push(post);
-                        }
-                        //if (post.type == 'link' || post.type == 'text'){
-                            
-                        //}
-                        return true;//post.type == 'link' || post.type == 'text' ? true : false;
-                    })
-                }
-                return a;
-            }).catch(function(err) {
-                console.log(err);
-                db.collection('blogs').remove({ name: b.name })
-                return err;
-            });
+    db.collection('blogs').find({}).sort({latest_scrape : 1}).limit(10).toArray((a,b)=>{
+      console.log(b);
+      backupBlog(b);
     });
     
-    res.send(posts);
+    res.send('');
 
 });
+
+
+const backupBlog = (b) => {
+  let latest_id = b ? b.latest : 0;
+  // await
+  client.blogPosts(b.name + '.tumblr.com')
+      .then((data) => {
+          console.log('blog',b.name);
+          db.collection('blogs').update(
+              { name: b.name },
+              {
+                  $set: {latest_scrape: new Date().getTime()}
+              }
+          )
+          //console.log(data.posts); // liked_posts
+          let a = [];
+          if (data){
+            if (data.posts.length){
+              db.collection('blogs').update(
+                  { name: b.name },
+                  {
+                      name: b.name,
+                      latest: data.posts[0].id,
+                      latest_scrape: new Date().getTime()
+                  }
+              )
+            }
+              a = data.posts.filter((post)=>{
+                console.log(latest_id, post.id);
+                  if (post.id > latest_id || !latest_id){
+                    console.log('Insert', post);
+                      db.collection('posts').update(
+                        {id: post.id},
+                        post,
+                        { upsert: true }
+                      )
+                  }
+                      
+                  return true;//post.type == 'link' || post.type == 'text' ? true : false;
+              })
+          }
+          return a;
+      }).catch(function(err) {
+          console.log(err);
+          db.collection('blogs').remove({ name: b.name })
+          return err;
+      });
+}
+
 
 
 
