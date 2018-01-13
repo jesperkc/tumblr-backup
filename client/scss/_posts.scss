@@ -1,0 +1,17 @@
+
+.posts{
+  display: flex;
+  flex-wrap: wrap;
+}
+.post{
+  flex: 1 1 23%;
+  max-width: 23%;
+  margin: 1%;
+  padding: 20px;
+  box-sizing: border-box;
+  border: 1px solid #ddd;
+  border-radius: 10px;
+}
+.post img{
+  max-width: 100%;
+}
