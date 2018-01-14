@@ -20,30 +20,48 @@ class Posts extends React.Component {
   render() {
     return (
       <div className="posts">
-        {this.state.posts.map((post)=>{
-          if (post.type === 'photo') return <PostPhoto {...post}/>
-          if (post.type === 'video') return <PostVideo {...post}/>
-          if (post.type === 'link') return <PostLink {...post}/>
-          if (post.type === 'text') return <PostText {...post}/>
-          return '';
-        })}
+        {this.state.posts.map((post)=><Post post={post}/>)}
       </div>
     );
   }
 }
 
 // Todo trail
-const PostText = ({title, summary, trail, post_url, date, blog_name}) => (
-  <div className="post"><h5>{date} - {blog_name}</h5><h2><a href={post_url} target="_blank">{title}</a></h2> <h4><a href={post_url} target="_blank">{summary}</a></h4></div>
+const getComponent = (post) => {
+  console.log(post.type);
+  switch (post.type) {
+    case 'photo':
+      return <PostPhoto {...post}/>
+    case 'video':
+      return <PostVideo {...post}/>
+    case 'link':
+      return <PostLink {...post}/>
+    case 'text':
+      return <PostText {...post}/>
+  }
+}
+
+const Post = ({post}) => (
+  <div className="post">
+  <div className="post-header">{post.date} - <a href={post.post_url} target="_blank">{post.blog_name}</a></div>
+  <div className="post-body">{getComponent(post)}</div>
+  <div className="post-footer"></div>
+  </div>
 )
-const PostLink = ({url, date, blog_name}) => (
-  <div className="post"><h5>{date} - {blog_name}</h5>Link <a href={url} target="_blank">{url}</a></div>
+const PostText = ({title, trail, body}) => (
+  <div>
+    <h2>{title}</h2>
+    <p dangerouslySetInnerHTML={{ __html: body }} />
+  </div>
 )
-const PostVideo = ({post_url, thumbnail_url, date, blog_name}) => (
-  <div className="post"><h5>{date} - {blog_name}</h5>Video <a href={post_url} target="_blank"><img src={thumbnail_url} role="presentation"/></a></div>
+const PostLink = ({url}) => (
+  <div>Link <a href={url} target="_blank">{url}</a></div>
 )
-const PostPhoto = ({photos, summary, post_url, date, blog_name}) => (
-  <div className="post"><h5>{date} - {blog_name}</h5><h3><a href={post_url} target="_blank">{summary}</a></h3>{photos.map((p)=><img src={p.original_size.url} role="presentation"/>)}</div>
+const PostVideo = ({summary, post_url, thumbnail_url, caption}) => (
+  <div><h3>{summary}</h3> <a href={post_url} target="_blank"><img src={thumbnail_url} role="presentation"/></a></div>
+)
+const PostPhoto = ({photos, summary}) => (
+  <div><h3>{summary}</h3>{photos.map((p)=><img src={p.original_size.url} role="presentation"/>)}</div>
 )
 
 export default Posts

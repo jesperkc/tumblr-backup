@@ -48,14 +48,67 @@ app.get('/backup/', async (req,res)=>{
   // Make the request
     console.log('backup');
     let posts = [];
-    db.collection('blogs').find({}).sort({latest_scrape : 1}).limit(10).toArray((a,b)=>{
-      console.log(b);
-      backupBlog(b);
+    db.collection('blogs').find({}).sort({latest_scrape : 1}).limit(10).toArray((a,blogs)=>{
+      console.log(blogs);
+      for (var i=0; i<blogs.length; i++){
+        backupLikes(blogs[i]);
+        backupBlog(blogs[i]);
+      }
     });
     
     res.send('');
 
 });
+
+
+app.get('/backup/like/', async (req,res)=>{
+  backupLikes({
+    latest_like: 0,
+    name: 'neptaboolover'
+  })    
+  res.send('');
+});
+
+
+
+const backupLikes = (b) => {
+  let latest_id = b ? b.latest_like : 0;
+  // await
+  client.blogLikes(b.name + '.tumblr.com')
+      .then((data) => {
+          console.log('blog likes',b.name);
+          let a = [];
+          if (data){
+            if (data.liked_posts.length){
+              db.collection('blogs').update(
+                  { name: b.name },
+                  { $set: {
+                      latest_like: data.liked_posts[0].id,
+                    }
+                  }
+              )
+            }
+              a = data.liked_posts.filter((post)=>{
+                console.log(latest_id, post.id);
+                  if (post.id > latest_id || !latest_id){
+                    console.log('Insert', post);
+                      db.collection('posts').update(
+                        {id: post.id},
+                        post,
+                        { upsert: true }
+                      )
+                  }
+                      
+                  return true;//post.type == 'link' || post.type == 'text' ? true : false;
+              })
+          }
+          return a;
+      }).catch(function(err) {
+          console.log(err);
+          db.collection('blogs').remove({ name: b.name })
+          return err;
+      });
+}
 
 
 const backupBlog = (b) => {
@@ -110,7 +163,7 @@ const backupBlog = (b) => {
 
 app.get('/posts/', async (req,res)=>{
   //{type: 'link', type: 'text'}
-  await db.collection('posts').find({date: {$gte: "2018-01-12 00:00:00 GMT"}}, {sort: { timestamp : -1 }, limit: 400}).toArray((a,b)=>{
+  await db.collection('posts').find({date: {$gte: "2018-01-12 00:00:00 GMT"}}, {sort: { date : -1 }, limit: 400}).toArray((a,b)=>{
       res.send(b);
   });
 });

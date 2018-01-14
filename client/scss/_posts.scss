@@ -7,10 +7,20 @@
   flex: 1 1 23%;
   max-width: 23%;
   margin: 1%;
-  padding: 20px;
+  
   box-sizing: border-box;
   border: 1px solid #ddd;
   border-radius: 10px;
+}
+.post-header{
+  border-bottom: 1px solid #ddd;
+  padding: 20px;
+}
+.post-body{
+  padding: 20px;
+}
+.post-footer{
+  padding: 20px;
 }
 .post img{
   max-width: 100%;
