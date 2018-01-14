@@ -103,10 +103,6 @@ const backupLikes = (b) => {
               })
           }
           return a;
-      }).catch(function(err) {
-          console.log(err);
-          db.collection('blogs').remove({ name: b.name })
-          return err;
       });
 }
 
