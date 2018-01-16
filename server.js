@@ -9,6 +9,9 @@ const olddb = new sqlite.Database(filebuffer);
 
 const app = express();
 
+var bodyParser = require('body-parser');
+app.use(bodyParser.json()); // support json encoded bodies
+app.use(bodyParser.urlencoded({ extended: true })); // support encoded bodies
 
 var mongoose = require('mongoose');
 mongoose.connect('mongodb://wanker:wankerpass@ds247327.mlab.com:47327/tmblr',{
@@ -33,15 +36,36 @@ app.post('/addblogs', (req, res) => {
   let blogs = req.body.blogs;
   if (blogs.trim() != ''){
       blogs = blogs.split('\n');
-      for (var i=0; i<blogs.length; i++){
-          db.collection('blogs').update({ name: blogs[i] }, { name: blogs[i], latest_scrape: new Date().getTime() }, { upsert: true });
-      }
+      addArrayOfBlogs(blogs);
   }
   db.collection('blogs').find( { $query: {}, $sort: { latest_scrape : 1 } }).toArray((a,b)=>{
       console.log(b);
   });
   //
   res.send('ok');
+});
+
+const addArrayOfBlogs = (blogs) => {
+  for (var i=0; i<blogs.length; i++){
+    db.collection('blogs').update({ name: blogs[i] }, { name: blogs[i], latest_scrape: new Date().getTime() }, { upsert: true });
+  }
+}
+
+app.get('/getPostNotes/:blog/:id', async (req,res)=>{
+  console.log(req.params.blog);
+  client.blogPosts(req.params.blog + '.tumblr.com', {id: req.params.id, reblog_info: true, notes_info: true})
+      .then((data) => {
+        var reblogs = data.posts[0].trail.filter((t)=>t.blog.active).map((t)=>t.blog.name);
+        console.log(reblogs);
+        console.log(data.posts[0].trail);
+        console.log('-------------');
+        var notes = data.posts[0].notes.map((t)=>t.blog_name);
+        console.log(data.posts[0].notes);
+        console.log(notes);
+        addArrayOfBlogs(reblogs);
+        addArrayOfBlogs(notes);
+      }) 
+  res.send('');
 });
 
 app.get('/backup/', async (req,res)=>{
@@ -60,7 +84,7 @@ app.get('/backup/', async (req,res)=>{
 
 });
 
-
+// Test
 app.get('/backup/like/', async (req,res)=>{
   backupLikes({
     latest_like: 0,
@@ -159,7 +183,8 @@ const backupBlog = (b) => {
 
 app.get('/posts/', async (req,res)=>{
   //{type: 'link', type: 'text'}
-  await db.collection('posts').find({date: {$gte: "2018-01-12 00:00:00 GMT"}}, {sort: { date : -1 }, limit: 400}).toArray((a,b)=>{
+  // {date: {$gte: "2018-01-12 00:00:00 GMT"}}, 
+  await db.collection('posts').find({}).sort({$natural:-1}).limit(500).toArray((a,b)=>{
       res.send(b);
   });
 });

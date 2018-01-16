@@ -1,6 +1,12 @@
 import React, { Component } from "react";
+import {
+  BrowserRouter as Router,
+  Route,
+  Link
+} from 'react-router-dom'
 
 import Posts from "./Posts";
+import AdminAddBlogs from './AdminAddBlogs'
 import "./style.css";
 
 class App extends Component {
@@ -24,11 +30,19 @@ class App extends Component {
     const { selectedFoods } = this.state;
 
     return (
-      <div className="App">
-        <div className="ui text container">
-          <Posts/>
+      <Router>
+        <div>
+          <ul>
+            <li><Link to="/">Home!!</Link></li>
+            <li><Link to="/AdminAddBlogs">Admin</Link></li>
+          </ul>
+    
+          <hr/>
+    
+          <Route exact path="/" component={Posts}/>
+          <Route path="/AdminAddBlogs" component={AdminAddBlogs}/>
         </div>
-      </div>
+      </Router>
     );
   }
 }
